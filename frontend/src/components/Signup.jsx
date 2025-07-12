@@ -27,7 +27,7 @@ export default function Signup() {
       } else {
         // Optionally save the token
         localStorage.setItem("token", data.token);
-        navigate("/dashboard"); // or wherever after signup
+        navigate("/profile"); // or wherever after signup
       }
     } catch (err) {
       console.error(err);
