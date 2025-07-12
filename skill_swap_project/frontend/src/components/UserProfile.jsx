@@ -14,6 +14,8 @@ export default function UserProfile() {
   const [profilePhoto, setProfilePhoto] = useState(null); // base64 or URL
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [skillOfferedInput, setSkillOfferedInput] = useState("");
+  const [skillWantedInput, setSkillWantedInput] = useState("");
 
   const token = localStorage.getItem("token");
 
@@ -21,7 +23,7 @@ export default function UserProfile() {
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const res = await fetch("http://localhost:5000/api/profile", {
+        const res = await fetch("http://localhost:8000/api/profile", {
           headers: {
             Authorization: `Bearer ${token}`,
           },
@@ -30,6 +32,10 @@ export default function UserProfile() {
         if (!res.ok) throw new Error("Failed to fetch profile");
 
         const data = await res.json();
+        console.log("Fetched profile data:", data);
+        console.log("Skills Offered from server:", data.skillsOffered);
+        console.log("Skills Wanted from server:", data.skillsWanted);
+        
         setName(data.name || "");
         setLocation(data.location || "");
         setSkillsOffered(data.skillsOffered || []);
@@ -47,10 +53,12 @@ export default function UserProfile() {
     else navigate("/login");
   }, [token, navigate]);
 
-  const handleSkillAdd = (list, setList) => (e) => {
-    if (e.key === "Enter" && e.target.value.trim() !== "") {
-      setList([...list, e.target.value.trim()]);
-      e.target.value = "";
+  const handleSkillAdd = (list, setList, inputValue, setInputValue) => (e) => {
+    if ((e.key === "Enter" || e.type === "blur") && inputValue.trim() !== "") {
+      const newList = [...list, inputValue.trim()];
+      setList(newList);
+      setInputValue("");
+      console.log("Updated list:", newList);
     }
   };
 
@@ -61,40 +69,108 @@ export default function UserProfile() {
   const handlePhotoUpload = (e) => {
     const file = e.target.files[0];
     if (file) {
+      // Check file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        setError("Image size must be less than 5MB");
+        return;
+      }
+
       const reader = new FileReader();
       reader.onloadend = () => {
-        setProfilePhoto(reader.result); // base64 string
+        // Compress the image
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          const ctx = canvas.getContext('2d');
+          
+          // Set maximum dimensions
+          const maxWidth = 300;
+          const maxHeight = 300;
+          
+          let { width, height } = img;
+          
+          // Calculate new dimensions
+          if (width > height) {
+            if (width > maxWidth) {
+              height = (height * maxWidth) / width;
+              width = maxWidth;
+            }
+          } else {
+            if (height > maxHeight) {
+              width = (width * maxHeight) / height;
+              height = maxHeight;
+            }
+          }
+          
+          canvas.width = width;
+          canvas.height = height;
+          
+          // Draw and compress
+          ctx.drawImage(img, 0, 0, width, height);
+          const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.7); // 70% quality
+          
+          setProfilePhoto(compressedDataUrl);
+        };
+        img.src = reader.result;
       };
       reader.readAsDataURL(file);
     }
   };
 
+  // Before saving, make sure to add any pending input
   const handleSave = async () => {
+    // Add pending skill inputs if not empty
+    let finalSkillsOffered = skillsOffered;
+    let finalSkillsWanted = skillsWanted;
+    if (skillOfferedInput.trim() !== "") {
+      finalSkillsOffered = [...skillsOffered, skillOfferedInput.trim()];
+      setSkillsOffered(finalSkillsOffered);
+      setSkillOfferedInput("");
+    }
+    if (skillWantedInput.trim() !== "") {
+      finalSkillsWanted = [...skillsWanted, skillWantedInput.trim()];
+      setSkillsWanted(finalSkillsWanted);
+      setSkillWantedInput("");
+    }
     setLoading(true);
     setError("");
     try {
+      const profileData = {
+        name,
+        location,
+        skillsOffered: finalSkillsOffered,
+        skillsWanted: finalSkillsWanted,
+        availability,
+        profileVisibility,
+        profilePhoto,
+      };
+      
+      console.log("Sending profile data:", profileData);
+      console.log("Skills Offered (type):", typeof finalSkillsOffered, "length:", finalSkillsOffered.length);
+      console.log("Skills Wanted (type):", typeof finalSkillsWanted, "length:", finalSkillsWanted.length);
+      
       const res = await fetch("http://localhost:8000/api/profile", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({
-          name,
-          location,
-          skillsOffered,
-          skillsWanted,
-          availability,
-          profileVisibility,
-          profilePhoto,
-        }),
+        body: JSON.stringify(profileData),
       });
 
+      console.log("Response status:", res.status);
+      console.log("Response headers:", res.headers);
+
       const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Failed to save profile");
+      console.log("Response data:", data);
+      
+      if (!res.ok) {
+        const errorMessage = (data.message ? data.message : "Failed to save profile") + (data.error ? " (" + data.error + ")" : "");
+        throw new Error(errorMessage);
+      }
       alert("Profile saved successfully!");
     } catch (err) {
-      console.error(err);
+      console.error("Error details:", err);
       setError(err.message);
     } finally {
       setLoading(false);
@@ -171,7 +247,10 @@ export default function UserProfile() {
             <input
               className="w-full bg-black border border-white px-3 py-2"
               placeholder="Press Enter to add skill"
-              onKeyDown={handleSkillAdd(skillsOffered, setSkillsOffered)}
+              value={skillOfferedInput}
+              onChange={e => setSkillOfferedInput(e.target.value)}
+              onKeyDown={handleSkillAdd(skillsOffered, setSkillsOffered, skillOfferedInput, setSkillOfferedInput)}
+              onBlur={handleSkillAdd(skillsOffered, setSkillsOffered, skillOfferedInput, setSkillOfferedInput)}
             />
 
             <label className="block mt-4 mb-1">Availability</label>
@@ -244,7 +323,10 @@ export default function UserProfile() {
             <input
               className="w-full bg-black border border-white px-3 py-2"
               placeholder="Press Enter to add skill"
-              onKeyDown={handleSkillAdd(skillsWanted, setSkillsWanted)}
+              value={skillWantedInput}
+              onChange={e => setSkillWantedInput(e.target.value)}
+              onKeyDown={handleSkillAdd(skillsWanted, setSkillsWanted, skillWantedInput, setSkillWantedInput)}
+              onBlur={handleSkillAdd(skillsWanted, setSkillsWanted, skillWantedInput, setSkillWantedInput)}
             />
           </div>
         </div>

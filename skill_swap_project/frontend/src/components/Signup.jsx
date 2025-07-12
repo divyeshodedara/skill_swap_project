@@ -23,11 +23,11 @@ export default function Signup() {
       const data = await res.json();
 
       if (!res.ok) {
-        setError(data.message || "Signup failed");
+        setError((data.message ? data.message : "Signup failed") + (data.error ? " (" + data.error + ")" : ""));
       } else {
         // Optionally save the token
         localStorage.setItem("token", data.token);
-        navigate("/dashboard"); // or wherever after signup
+        navigate("/profile"); // Navigate to UserProfile page
       }
     } catch (err) {
       console.error(err);

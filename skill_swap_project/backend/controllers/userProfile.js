@@ -14,6 +14,19 @@ export const getProfile = async (req, res) => {
 export const updateProfile = async (req, res) => {
   const { name, location, skillsOffered, skillsWanted, availability, profileVisibility, profilePhoto } = req.body;
 
+  console.log("Received profile data:", {
+    name,
+    location,
+    skillsOffered,
+    skillsWanted,
+    availability,
+    profileVisibility,
+    skillsOfferedType: typeof skillsOffered,
+    skillsWantedType: typeof skillsWanted,
+    skillsOfferedLength: skillsOffered ? skillsOffered.length : 'undefined',
+    skillsWantedLength: skillsWanted ? skillsWanted.length : 'undefined'
+  });
+
   try {
     let profile = await UserProfile.findOne({ userId: req.user.id });
 
@@ -40,8 +53,14 @@ export const updateProfile = async (req, res) => {
       await profile.save();
     }
 
+    console.log("Saved profile:", {
+      skillsOffered: profile.skillsOffered,
+      skillsWanted: profile.skillsWanted
+    });
+
     res.json(profile);
   } catch (err) {
+    console.error("Error saving profile:", err);
     res.status(500).json({ message: 'Error updating profile', error: err.message });
   }
 };
