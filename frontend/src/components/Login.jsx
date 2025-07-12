@@ -39,7 +39,7 @@ export default function Login() {
 
       // Optionally save token and redirect
       localStorage.setItem("token", data.token);
-      navigate("/dashboard"); // Redirect after login
+      navigate("/profile"); // Redirect after login
     } catch (err) {
       setError("Something went wrong. Please try again.");
     }

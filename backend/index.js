@@ -2,6 +2,7 @@ import express from "express";
 import spamDetect from "./utils/spamDetect.js";
 import authRoutes from "./routes/auth.js"
 import connectDB from "./config/db.js";
+import profileRoutes from "./routes/profile.js"
 import cors from 'cors'
 
 const app=express()
@@ -14,5 +15,6 @@ connectDB()
 app.use(cors())
 app.use(express.json())
 app.use("/api/auth",authRoutes)
+app.use("/api/profile",profileRoutes)
 
 app.listen(PORT,()=>console.log("server is running on port : "+PORT))
