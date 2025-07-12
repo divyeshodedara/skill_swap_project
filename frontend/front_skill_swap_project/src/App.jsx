@@ -1,47 +1,29 @@
-import React, { useState } from "react";
-import Navbar from "./components/Navbar";
-import UserCard from "./components/UserCard";
-import Pagination from "./components/Pagination";
+import React from "react";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
 
-const users = [
-  {
-    name: "Marc Demo",
-    offeredSkills: ["JavaScript", "Python"],
-    wantedSkills: ["Photoshop", "Graphic Designer"],
-    rating: 3.9,
-  },
-  {
-    name: "Michell",
-    offeredSkills: ["JavaScript", "Python"],
-    wantedSkills: ["Photoshop", "Graphic Designer"],
-    rating: 2.5,
-  },
-  {
-    name: "Joe Wills",
-    offeredSkills: ["JavaScript", "Python"],
-    wantedSkills: ["Photoshop", "Graphic Designer"],
-    rating: 4.0,
-  },
-];
+import Login from "./components/Login";
+import Signup from "./components/Signup";
+import UserProfile from "./components/UserProfile";
+import Screen5 from "./components/Screen5";
+import Screen4 from "./components/Screen4";
+import Screen6 from "./components/Screen6";
+import Screen1 from "./components/Screen1"; // ✅ Imported
 
-const App = () => {
-  const [currentPage, setCurrentPage] = useState(1);
-
+export default function App() {
   return (
-    <div className="min-h-screen bg-black text-white">
-      <Navbar />
-      <div className="p-6 max-w-4xl mx-auto">
-        {users.map((user, index) => (
-          <UserCard key={index} {...user} />
-        ))}
-        <Pagination
-          totalPages={7}
-          currentPage={currentPage}
-          onPageChange={setCurrentPage}
-        />
-      </div>
-    </div>
-  );
-};
+    <BrowserRouter>
+      <Routes>
+        {/* Auth Pages */}
+        <Route path="/" element={<Login />} />
+        <Route path="/signup" element={<Signup />} />
 
-export default App;
+        {/* Main Pages */}
+        <Route path="/profile" element={<UserProfile />} />
+        <Route path="/screen1" element={<Screen1 />} />
+        <Route path="/screen4" element={<Screen4 />} />
+        <Route path="/screen5" element={<Screen5 />} />
+        <Route path="/screen6" element={<Screen6 />} />
+      </Routes>
+    </BrowserRouter>
+  );
+}
