@@ -1,55 +1,23 @@
-// models/UserProfile.js
 import mongoose from 'mongoose';
 
 const userProfileSchema = new mongoose.Schema({
-  name: {
-    type: String,
+  userId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User', // assuming you have a User model
     required: true,
-    trim: true
+    unique: true,
   },
-
-  location: {
-    type: String,
-    default: ''
-  },
-
-  profilePhoto: {
-    type: String, // URL to avatar
-    default: ''
-  },
-
-  skillsOffered: {
-    type: [String],
-    required: true,
-    validate: v => Array.isArray(v) && v.length > 0
-  },
-
-  skillsWanted: {
-    type: [String],
-    required: true,
-    validate: v => Array.isArray(v) && v.length > 0
-  },
-
-  availability: {
-    type: String,
-    enum: ['weekends', 'weekdays', 'evenings', 'mornings', 'flexible'],
-    default: 'flexible'
-  },
-
+  name: String,
+  location: String,
+  skillsOffered: [String],
+  skillsWanted: [String],
+  availability: String,
   profileVisibility: {
     type: String,
-    enum: ['public', 'private'],
-    default: 'public'
+    enum: ['Public', 'Private'],
+    default: 'Public'
   },
-
-  user: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: true,
-    unique: true
-  }
-
+  profilePhoto: String, // URL or file path
 }, { timestamps: true });
 
-const UserProfile = mongoose.model('UserProfile', userProfileSchema);
-export default UserProfile;
+export default mongoose.model('UserProfile', userProfileSchema);
